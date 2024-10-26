@@ -2,7 +2,7 @@ venv/
 idea/
 *.pyc
 __pycache__/
-
+flaskr.idea/
 instance/
 
 .pytest_cache/
