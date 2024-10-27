@@ -183,7 +183,6 @@ class SearchBooksTestCase(unittest.TestCase):
 class UserTestCase(unittest.TestCase):
     def setUp(self):
         app.config["TESTING"] = True
-        app.config["MONGO_URI"] = "mongodb://localhost:27017/test_book_recommendation"
         self.client = app.test_client()
 
         with app.app_context():
