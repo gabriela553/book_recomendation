@@ -4,7 +4,15 @@ on:
   pull_request:
     branches: [ "master", "docker_added" ]
   workflow_dispatch:
-  
+    inputs:
+      branch:
+        description: 'Select the branch to run the workflow'
+        required: true
+        default: 'docker_added'
+        options:
+          - master
+          - docker_added
+
 jobs:
   test:
     runs-on: ubuntu-latest
