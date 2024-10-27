@@ -52,7 +52,7 @@ jobs:
       run: sleep 30  
 
     - name: Execute tests in the running services
-      run: docker-compose exec -T app python -m unittest discover -v tests
+      run: docker-compose run app python -m unittest tests/tests.py
 
     - name: Stop and remove Docker containers
       if: always()
