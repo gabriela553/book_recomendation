@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch
 from flask import json
 from flaskr.app import app, mongo
+from werkzeug.security import generate_password_hash
 
 
 class AddBookTestCase(unittest.TestCase):
@@ -177,6 +178,71 @@ class SearchBooksTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.data)
         self.assertEqual(data["message"], "Please provide a search query.")
+
+
+class UserTestCase(unittest.TestCase):
+    def setUp(self):
+        app.config["TESTING"] = True
+        app.config["MONGO_URI"] = "mongodb://localhost:27017/test_book_recommendation"
+        self.client = app.test_client()
+
+        with app.app_context():
+            mongo.db.users.delete_many({})
+
+    def test_register_user_success(self):
+        response = self.client.post(
+            "/register", json={"username": "testuser", "password": "testpassword"}
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertIn("User registered successfully", response.get_json()["message"])
+
+    def test_register_user_existing_username(self):
+        with app.app_context():
+            mongo.db.users.insert_one(
+                {
+                    "username": "testuser",
+                    "password": generate_password_hash("testpassword"),
+                }
+            )
+
+        response = self.client.post(
+            "/register", json={"username": "testuser", "password": "newpassword"}
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Username already exists", response.get_json()["error"])
+
+    def test_register_user_missing_fields(self):
+        response = self.client.post("/register", json={})
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(
+            "Username and password are required", response.get_json()["error"]
+        )
+
+    def test_login_user_success(self):
+        with app.app_context():
+            mongo.db.users.insert_one(
+                {
+                    "username": "testuser",
+                    "password": generate_password_hash("testpassword"),
+                }
+            )
+
+        response = self.client.post(
+            "/login", json={"username": "testuser", "password": "testpassword"}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Logged in successfully", response.get_json()["message"])
+
+    def test_login_user_invalid_credentials(self):
+        response = self.client.post(
+            "/login", json={"username": "nonexistentuser", "password": "wrongpassword"}
+        )
+        self.assertEqual(response.status_code, 401)
+        self.assertIn("Invalid username or password", response.get_json()["error"])
+
+    def tearDown(self):
+        with app.app_context():
+            mongo.db.users.delete_many({})
 
 
 if __name__ == "__main__":
