@@ -38,5 +38,5 @@ jobs:
         ruff check
     - name: Test with unittest
       run: |
-        unittest tests/tests.py
+        python -m unittest discover -s tests -p "*.py"
 
