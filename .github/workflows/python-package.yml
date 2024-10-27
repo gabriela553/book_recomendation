@@ -35,7 +35,7 @@ jobs:
         black --check .
     - name: Lint with ruff
       run: |
-        ruff .
+        ruff check
     - name: Test with unittest
       run: |
         unittest tests/tests.py
