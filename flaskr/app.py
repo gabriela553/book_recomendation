@@ -8,7 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 api = Api(app)
 
-app.config["MONGO_URI"] = "mongodb://mongo:27017/book_recommendation"
+app.config["MONGO_URI"] = "mongodb://mongo:27018/book_recommendation"
 
 mongo = PyMongo(app)
 
