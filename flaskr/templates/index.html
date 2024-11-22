@@ -3,14 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rekomendacje Książek</title>
+    <title>Książki</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h1>Dodaj Książkę</h1>
+    <h1>Rekomendacje Książek</h1>
+
+    <h2>Dodaj książkę do ulubionych</h2>
     <form action="/add" method="POST">
         <input type="text" name="title" placeholder="Tytuł książki" required>
         <input type="text" name="author" placeholder="Autor książki" required>
-        <button type="submit">Dodaj</button>
+        <button type="submit">Dodaj książkę</button>
     </form>
+
+    <hr>
+
+    <h2>Wyszukaj książki</h2>
+    <form action="/search" method="GET">
+        <input type="text" name="query" placeholder="Szukaj książek..." required>
+        <button type="submit">Szukaj</button>
+    </form>
+
+    <hr>
+
 </body>
 </html>
