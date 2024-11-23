@@ -1,16 +1,37 @@
 import requests as requests_add
 import requests as requests_search
+from bson import ObjectId
 from flask import Flask, render_template, request, jsonify
 from flask_pymongo import PyMongo
 from flask_restful import Api
-from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import LoginManager, UserMixin, login_required, logout_user
+from flask_bcrypt import Bcrypt
 
 app = Flask(__name__)
 api = Api(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
+bcrypt = Bcrypt(app)
+
 
 app.config["MONGO_URI"] = "mongodb://mongo:27017/book_recommendation"
 
 mongo = PyMongo(app)
+
+
+class User(UserMixin):
+    def __init__(self, username, password, id):
+        self.username = username
+        self.password = password
+        self.id = id
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    user = mongo.db.users.find_one({"_id": ObjectId(user_id)})
+    if user:
+        return User(user["username"], user["password"], str(user["_id"]))
+    return None
 
 
 @app.route("/")
@@ -18,7 +39,13 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/auth")
+def auth():
+    return render_template("auth.html")
+
+
 @app.route("/add", methods=["POST"])
+@login_required
 def add_book():
     title = request.form["title"]
     author = request.form["author"]
@@ -103,34 +130,61 @@ def search_books():
 
 @app.route("/register", methods=["POST"])
 def register():
-    data = request.get_json()
-    username = data.get("username")
-    password = data.get("password")
+    try:
+        data = request.get_json()
+        if data is None:
+            raise ValueError("No JSON data provided")
 
-    if not username or not password:
-        return jsonify({"error": "Username and password are required"}), 400
+        username = data.get("username")
+        password = data.get("password")
 
-    user = mongo.db.users.find_one({"username": username})
-    if user:
-        return jsonify({"error": "Username already exists"}), 400
+        if not username or not password:
+            return jsonify({"error": "Username and password are required"}), 400
 
-    hashed_password = generate_password_hash(password)
-    mongo.db.users.insert_one({"username": username, "password": hashed_password})
+        user = mongo.db.users.find_one({"username": username})
+        if user:
+            return jsonify({"error": "Username already exists"}), 400
 
-    return jsonify({"message": "User registered successfully"}), 201
+        hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+        mongo.db.users.insert_one({"username": username, "password": hashed_password})
+
+        return jsonify({"message": "User registered successfully"}), 201
+    except ValueError as ve:
+        print("Error:", ve)
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        print("Unexpected error:", e)
+        return jsonify({"error": "Internal Server Error"}), 500
 
 
 @app.route("/login", methods=["POST"])
 def login():
-    data = request.get_json()
-    username = data.get("username")
-    password = data.get("password")
+    try:
+        data = request.get_json()
+        if data is None:
+            raise ValueError("No JSON data provided")
 
-    user = mongo.db.users.find_one({"username": username})
-    if not user or not check_password_hash(user["password"], password):
-        return jsonify({"error": "Invalid username or password"}), 401
+        username = data.get("username")
+        password = data.get("password")
 
-    return jsonify({"message": "Logged in successfully"}), 200
+        user = mongo.db.users.find_one({"username": username})
+        if not user or not bcrypt.check_password_hash(user["password"], password):
+            return jsonify({"error": "Invalid username or password"}), 401
+
+        return jsonify({"message": "Logged in successfully"}), 200
+    except ValueError as ve:
+        print("Error:", ve)
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        print("Unexpected error:", e)
+        return jsonify({"error": "Internal Server Error"}), 500
+
+
+@app.route("/logout", methods=["POST"])
+@login_required
+def logout():
+    logout_user()
+    return jsonify({"message": "Logged out successfully!"}), 200
 
 
 if __name__ == "__main__":
