@@ -1,10 +1,16 @@
 import requests as requests_add
 import requests as requests_search
 from bson import ObjectId
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from flask_pymongo import PyMongo
 from flask_restful import Api
-from flask_login import LoginManager, UserMixin, login_required, logout_user
+from flask_login import (
+    LoginManager,
+    UserMixin,
+    login_required,
+    logout_user,
+    current_user,
+)
 from flask_bcrypt import Bcrypt
 from dotenv import load_dotenv
 import os
@@ -194,6 +200,16 @@ def login():
 def logout():
     logout_user()
     return jsonify({"message": "Logged out successfully!"}), 200
+
+
+@app.route("/profile")
+@login_required
+def profile():
+    user = mongo.db.users.find_one({"username": current_user.username})
+    if user:
+        favorite_books = user.get("favorite_books", [])
+        return render_template("profile.html", favorite_books=favorite_books)
+    return redirect(url_for("login"))
 
 
 if __name__ == "__main__":
