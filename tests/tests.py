@@ -1,8 +1,7 @@
 import unittest
 from unittest.mock import patch
 from flask import json
-from flaskr.app import app, mongo
-from werkzeug.security import generate_password_hash
+from flaskr.app import app, mongo, bcrypt
 
 
 class AddBookTestCase(unittest.TestCase):
@@ -11,6 +10,19 @@ class AddBookTestCase(unittest.TestCase):
         app.config["TESTING"] = True
         self.client = app.test_client()
 
+        with app.app_context():
+            hashed_password = bcrypt.generate_password_hash("testpassword").decode("utf-8")
+            mongo.db.users.insert_one(
+                {
+                    "username": "testuser",
+                    "password": hashed_password,
+                }
+            )
+        response = self.client.post(
+            "/login", json={"username": "testuser", "password": "testpassword"}
+        )
+
+        self.assertEqual(response.status_code, 200)
         self.test_db = mongo.db.books
         self.test_db.delete_many({})
 
@@ -58,17 +70,22 @@ class AddBookTestCase(unittest.TestCase):
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = mock_response_data
 
-        data = {"title": "Learning Python", "author": "Mark Lutz"}
+        with self.client as client:
+            client.post(
+                "/login", json={"username": "testuser", "password": "testpassword"}
+            )
 
-        response = self.client.post("/add", data=data)
+            data = {"title": "Learning Python", "author": "Mark Lutz"}
 
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b"Book added to DB!", response.data)
+            response = self.client.post("/add", data=data)
 
-        book = self.test_db.find_one({"title": data["title"], "author": data["author"]})
-        self.assertIsNotNone(book)
-        self.assertEqual(book["title"], data["title"])
-        self.assertEqual(book["author"], data["author"])
+            self.assertEqual(response.status_code, 200)
+            self.assertIn(b"Book added to DB!", response.data)
+
+            book = self.test_db.find_one({"title": data["title"], "author": data["author"]})
+            self.assertIsNotNone(book)
+            self.assertEqual(book["title"], data["title"])
+            self.assertEqual(book["author"], data["author"])
 
     def test_add_book_missing_data(self):
         data = {"author": "Test Author"}
@@ -197,15 +214,16 @@ class UserTestCase(unittest.TestCase):
 
     def test_register_user_existing_username(self):
         with app.app_context():
+            hashed_password = bcrypt.generate_password_hash("testpassword").decode("utf-8")
             mongo.db.users.insert_one(
                 {
                     "username": "testuser",
-                    "password": generate_password_hash("testpassword"),
+                    "password": hashed_password,
                 }
             )
 
         response = self.client.post(
-            "/register", json={"username": "testuser", "password": "newpassword"}
+            "/register", json={"username": "testuser", "password": "testpassword"}
         )
         self.assertEqual(response.status_code, 400)
         self.assertIn("Username already exists", response.get_json()["error"])
@@ -219,13 +237,13 @@ class UserTestCase(unittest.TestCase):
 
     def test_login_user_success(self):
         with app.app_context():
+            hashed_password = bcrypt.generate_password_hash("testpassword").decode("utf-8")
             mongo.db.users.insert_one(
                 {
                     "username": "testuser",
-                    "password": generate_password_hash("testpassword"),
+                    "password": hashed_password,
                 }
             )
-
         response = self.client.post(
             "/login", json={"username": "testuser", "password": "testpassword"}
         )

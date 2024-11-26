@@ -1,20 +1,28 @@
 import requests as requests_add
 import requests as requests_search
 from bson import ObjectId
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
 from flask_pymongo import PyMongo
 from flask_restful import Api
-from flask_login import LoginManager, UserMixin, login_required, logout_user
+from flask_login import LoginManager, UserMixin, login_required, logout_user, current_user
 from flask_bcrypt import Bcrypt
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 app = Flask(__name__)
 api = Api(app)
+
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+app.config["SESSION_COOKIE_SECURE"] = False
+app.config["SESSION_PERMANENT"] = False
+app.config["MONGO_URI"] = "mongodb://mongo:27017/book_recommendation"
+
 login_manager = LoginManager()
 login_manager.init_app(app)
+
 bcrypt = Bcrypt(app)
-
-
-app.config["MONGO_URI"] = "mongodb://mongo:27017/book_recommendation"
 
 mongo = PyMongo(app)
 
@@ -24,6 +32,9 @@ class User(UserMixin):
         self.username = username
         self.password = password
         self.id = id
+
+    def get_id(self):
+        return str(self.id)
 
 
 @login_manager.user_loader
@@ -45,11 +56,9 @@ def auth():
 
 
 @app.route("/add", methods=["POST"])
-@login_required
 def add_book():
     title = request.form["title"]
     author = request.form["author"]
-
     if not title or not author:
         return jsonify({"message": "Title and author are required."}), 400
 
@@ -170,7 +179,7 @@ def login():
         user = mongo.db.users.find_one({"username": username})
         if not user or not bcrypt.check_password_hash(user["password"], password):
             return jsonify({"error": "Invalid username or password"}), 401
-
+        session["user_id"] = str(user["_id"])
         return jsonify({"message": "Logged in successfully"}), 200
     except ValueError as ve:
         print("Error:", ve)
