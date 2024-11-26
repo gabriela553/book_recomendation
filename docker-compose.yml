@@ -16,6 +16,7 @@ services:
       - mongo
     environment:
       - MONGO_URI=mongodb://mongo:27017/book_recommendation
+      - SECRET_KEY=${SECRET_KEY}
 
 volumes:
   mongo_data:

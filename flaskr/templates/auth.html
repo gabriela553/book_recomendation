@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register and Login</title>
+</head>
+<body>
+    <h1>User Registration</h1>
+    <form id="registerForm">
+        <label for="registerUsername">Username:</label>
+        <input type="text" id="registerUsername" required>
+        <br>
+        <label for="registerPassword">Password:</label>
+        <input type="password" id="registerPassword" required>
+        <br>
+        <button type="button" onclick="registerUser()">Register</button>
+    </form>
+    <p id="registerResult"></p>
+
+    <h1>User Login</h1>
+    <form id="loginForm">
+        <label for="loginUsername">Username:</label>
+        <input type="text" id="loginUsername" required>
+        <br>
+        <label for="loginPassword">Password:</label>
+        <input type="password" id="loginPassword" required>
+        <br>
+        <button type="button" onclick="loginUser()">Login</button>
+    </form>
+    <p id="loginResult"></p>
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+</body>
+</html>
