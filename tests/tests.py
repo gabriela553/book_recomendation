@@ -11,7 +11,9 @@ class AddBookTestCase(unittest.TestCase):
         self.client = app.test_client()
 
         with app.app_context():
-            hashed_password = bcrypt.generate_password_hash("testpassword").decode("utf-8")
+            hashed_password = bcrypt.generate_password_hash("testpassword").decode(
+                "utf-8"
+            )
             mongo.db.users.insert_one(
                 {
                     "username": "testuser",
@@ -82,7 +84,9 @@ class AddBookTestCase(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertIn(b"Book added to DB!", response.data)
 
-            book = self.test_db.find_one({"title": data["title"], "author": data["author"]})
+            book = self.test_db.find_one(
+                {"title": data["title"], "author": data["author"]}
+            )
             self.assertIsNotNone(book)
             self.assertEqual(book["title"], data["title"])
             self.assertEqual(book["author"], data["author"])
@@ -214,7 +218,9 @@ class UserTestCase(unittest.TestCase):
 
     def test_register_user_existing_username(self):
         with app.app_context():
-            hashed_password = bcrypt.generate_password_hash("testpassword").decode("utf-8")
+            hashed_password = bcrypt.generate_password_hash("testpassword").decode(
+                "utf-8"
+            )
             mongo.db.users.insert_one(
                 {
                     "username": "testuser",
@@ -237,7 +243,9 @@ class UserTestCase(unittest.TestCase):
 
     def test_login_user_success(self):
         with app.app_context():
-            hashed_password = bcrypt.generate_password_hash("testpassword").decode("utf-8")
+            hashed_password = bcrypt.generate_password_hash("testpassword").decode(
+                "utf-8"
+            )
             mongo.db.users.insert_one(
                 {
                     "username": "testuser",

@@ -4,7 +4,7 @@ from bson import ObjectId
 from flask import Flask, render_template, request, jsonify, session
 from flask_pymongo import PyMongo
 from flask_restful import Api
-from flask_login import LoginManager, UserMixin, login_required, logout_user, current_user
+from flask_login import LoginManager, UserMixin, login_required, logout_user
 from flask_bcrypt import Bcrypt
 from dotenv import load_dotenv
 import os
